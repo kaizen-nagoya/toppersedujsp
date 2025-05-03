@@ -1,0 +1,77 @@
+####################################################################
+# Makefile for TM V.3.20A
+# COPYRIGHT(C) 1998(1998-2003)
+# RENESAS TECHNOLOGY CORPORATION ALL RIGHTS RESERVED
+# AND
+# RENESAS SOLUTIONS CORPORATION ALL RIGHTS RESERVED
+#
+#	Notice	:	Don't edit.
+#	Date	:	2004 03(March) 01(Monday) AM.10.14
+#	Project	:	NonOsTimer0
+####################################################################
+
+DELETE	=	@-del
+LNLIST	=	$(PROJECT).cmd
+PRJDIR	=	C:\usr\TOPPERS\jsp-1.4\OBJ\TIMER0
+LMC	=	LMC30
+CC	=	NC30
+AS	=	AS30
+OUTDIR	=	.
+MKDIR	=	@-mkdir
+ABSFILE	=	$(PROJECT).x30
+ODINCMD	=	$(OUTDIR)
+LN	=	LN30
+TARGET	=	$(ABSFILE)
+ECHO	=	@-echo
+MKFILE	=	$(PROJECT).tmk
+PROJECT	=	NonOsTimer0
+TYPE	=	@-type
+LFLAGS	=	-MS -L nc30lib -G -O $(OUTDIR)\$(TARGET) -ORDER bss_NE=400,bss_NO,program=0F0000
+CFLAGS	=	-c -I../../config/m16c-renesas/oaks16_mini -I../../config/m16c-renesas -I../../kernel -I../../include -I../../monitor -I. -dir $(OUTDIR) -g
+LMCFLAGS	=	-L
+AFLAGS	=	-LM -O$(OUTDIR)
+.SUFFIXES: .a30 .r30 .c .x30
+.PHONY: all
+all: \
+		$(OUTDIR)\$(TARGET) \
+		.\NonOsTimer0.mot 
+.PHONY: clean
+clean: 
+	$(DELETE) $(OUTDIR)\$(TARGET)
+	$(DELETE) $(ODINCMD)\$(LNLIST)
+	$(DELETE) $(OUTDIR)\start.r30
+	$(DELETE) $(OUTDIR)\device.r30
+	$(DELETE) $(OUTDIR)\timer0.r30
+	$(DELETE) $(OUTDIR)\START.LST
+	$(DELETE) $(OUTDIR)\NonOsTimer0.map
+$(ODINCMD)\$(LNLIST): \
+		.\$(MKFILE) 
+	$(ECHO)\$(MRLFLAGS) $(LFLAGS) >	$(ODINCMD)\$(LNLIST)
+	$(ECHO)\$(OUTDIR)\start.r30 >>	$(ODINCMD)\$(LNLIST)
+	$(ECHO)\$(OUTDIR)\device.r30 >>	$(ODINCMD)\$(LNLIST)
+	$(ECHO)\$(OUTDIR)\timer0.r30 >>	$(ODINCMD)\$(LNLIST)
+.\NonOsTimer0.mot: \
+		$(OUTDIR)\$(TARGET) 
+	$(LMC) $<
+$(OUTDIR)\$(TARGET): \
+		$(ODINCMD)\$(LNLIST) \
+		$(OUTDIR)\start.r30 \
+		$(OUTDIR)\device.r30 \
+		$(OUTDIR)\timer0.r30 
+	$(LN) @$(ODINCMD)\$(LNLIST)
+$(OUTDIR)\device.r30: \
+		.\device.c 
+	$(CC) $(MRCFLAGS) $(CFLAGS) .\device.c
+$(OUTDIR)\start.r30: \
+		.\start.a30 
+	$(AS) $(MRAFLAGS) $(AFLAGS) start.a30
+$(OUTDIR)\timer0.r30: \
+		.\timer0.c 
+	$(CC) $(MRCFLAGS) $(CFLAGS) timer0.c
+####################################################################
+# End of makefile for TM V.3.20A
+# COPYRIGHT(C) 1998(1998-2003)
+# RENESAS TECHNOLOGY CORPORATION ALL RIGHTS RESERVED
+# AND
+# RENESAS SOLUTIONS CORPORATION ALL RIGHTS RESERVED
+####################################################################

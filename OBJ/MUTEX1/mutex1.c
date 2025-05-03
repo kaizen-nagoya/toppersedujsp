@@ -1,0 +1,159 @@
+/*
+ *  TOPPERS/JSP Educative Program
+ *      Toyohashi Open Platform for Embedded Real-Time Systems/
+ *      Just Standard Profile Kernel
+ * 
+ *  Copyright (C) 2000-2003 by Embedded and Real-Time Systems Laboratory
+ *                              Toyohashi Univ. of Technology, JAPAN
+ *  Copyright (C) 2003-2004 by Platform Development Center
+ *                              RICOH COMPANY,LTD. JAPAN
+ *
+ *  上記著作権者は，Free Software Foundation によって公表されている 
+ *  GNU General Public License の Version 2 に記述されている条件か，以
+ *  下の(1)～(4)の条件を満たす場合に限り，本ソフトウェア（本ソフトウェ
+ *  アを改変したものを含む．以下同じ）を使用・複製・改変・再配布（以下，
+ *  利用と呼ぶ）することを無償で許諾する．
+ *  (1) 本ソフトウェアをソースコードの形で利用する場合には，上記の著作
+ *      権表示，この利用条件および下記の無保証規定が，そのままの形でソー
+ *      スコード中に含まれていること．
+ *  (2) 本ソフトウェアを再利用可能なバイナリコード（リロケータブルオブ
+ *      ジェクトファイルやライブラリなど）の形で利用する場合には，利用
+ *      に伴うドキュメント（利用者マニュアルなど）に，上記の著作権表示，
+ *      この利用条件および下記の無保証規定を掲載すること．
+ *  (3) 本ソフトウェアを再利用不可能なバイナリコードの形または機器に組
+ *      み込んだ形で利用する場合には，次のいずれかの条件を満たすこと．
+ *    (a) 利用に伴うドキュメント（利用者マニュアルなど）に，上記の著作
+ *        権表示，この利用条件および下記の無保証規定を掲載すること．
+ *    (b) 利用の形態を，別に定める方法によって，上記著作権者に報告する
+ *        こと．
+ *  (4) 本ソフトウェアの利用により直接的または間接的に生じるいかなる損
+ *      害からも，上記著作権者を免責すること．
+ * 
+ *  本ソフトウェアは，無保証で提供されているものである．上記著作権者は，
+ *  本ソフトウェアに関して，その適用可能性も含めて，いかなる保証も行わ
+ *  ない．また，本ソフトウェアの利用により直接的または間接的に生じたい
+ *  かなる損害に関しても，その責任を負わない．
+ * 
+ *  @(#) $Id: mutex1.c,v 1.1 2004/02/27 13:55:24 roi Exp $
+ */
+
+/* 
+ *  TOPPERS初級教育用のサンプルプログラム
+ *  display_taskはT_TICK2ミリ秒単位で、現在のシステム時間を表示する.
+ *  このタスクが実行中はLED3が点灯状態となる.
+ *  entry_taskはdisplay_taskを実行状態に移行させ、T_TICK1ミリ秒単位で、現在のシステム時間を表示する.
+ *  このタスクが実行中はLED2が点灯状態となる.
+ *  また、ドライバーはPDICに順ずるため、sfrは使用しない．
+ *
+ */
+
+#include <t_services.h>
+#include "kernel_id.h"
+#include "sim_device.h"
+#include "mutex1.h"
+
+static char const raddec[] = "0123456789";
+static char entry_mes[] = "entry_task ";
+static char display_mes[] = "display_task ";
+static char count_mes[] = "count = ";
+static char current_mes[] = " current_time = ";
+static char newline_mes[] = " !\n\r";
+int ltoa(unsigned long val, char * s);
+
+/*
+ *  表示用タスク
+ */
+void
+display_task(VP_INT exinf)
+{
+	SYSTIM  current_time;
+	TMO     tmout = 50;
+	UB      sw5, sw;
+	INT     count = 0;
+	char    buf[12];
+
+	syslog_1(LOG_INFO, "Sample1 display task starts (exinf = %d).", exinf);
+	sw5 = get_key(SW5);		/* 現在のSW5の取り込み */
+	for(;;){
+		tslp_tsk(T_TICK2);		/* TICK待ち */
+		set_led(LED3, ON);
+		get_tim(&current_time);
+		count++;
+		sw = get_key(SW5);
+		if(sw5 != sw){
+			if(sw == ON)
+				tmout = 100;
+			else
+				tmout = 50;
+			sw5 = sw;
+		}
+		serial_wri_dat(TASK_PORTID, display_mes, sizeof(display_mes));
+		serial_wri_dat(TASK_PORTID, count_mes, sizeof(count_mes));
+		ltoa(count, buf);
+		serial_wri_dat(TASK_PORTID, buf, strlen((const char *)buf));
+		tslp_tsk(tmout);
+		serial_wri_dat(TASK_PORTID, current_mes, sizeof(current_mes));
+		ltoa(current_time, buf);
+		serial_wri_dat(TASK_PORTID, buf, strlen((const char *)buf));
+		tslp_tsk(tmout);
+		serial_wri_dat(TASK_PORTID, newline_mes, sizeof(newline_mes));
+
+		set_led(LED3, OFF);
+	}
+}
+
+/*
+ *  メインタスク
+ *  (スイッチプロセス)
+ */
+void
+entry_task(VP_INT exinf)
+{
+	SYSTIM  current_time;
+	INT   count=0;
+	char  buf[12];
+
+	syslog_1(LOG_INFO, "Sample entry task starts (exinf = %d).", exinf);
+	initial_key();			/* キーの初期化 */
+	initial_led();			/* LEDの初期化 */
+	act_tsk(DISPLAY_TASK);	/* 表示タスクの起動 */
+
+	for(;;){
+		tslp_tsk(T_TICK1);
+		set_led(LED2, ON);
+		get_tim(&current_time);
+		count++;
+
+		serial_wri_dat(TASK_PORTID, entry_mes, sizeof(entry_mes));
+		serial_wri_dat(TASK_PORTID, count_mes, sizeof(count_mes));
+		ltoa(count, buf);
+		serial_wri_dat(TASK_PORTID, buf, strlen((const char *)buf));
+		serial_wri_dat(TASK_PORTID, current_mes, sizeof(current_mes));
+		ltoa(current_time, buf);
+		serial_wri_dat(TASK_PORTID, buf, strlen((const char *)buf));
+		serial_wri_dat(TASK_PORTID, newline_mes, sizeof(newline_mes));
+
+		set_led(LED2, OFF);
+	}
+}
+
+int ltoa(unsigned long val, char * s)
+{
+	char	buf[12];
+	int	i, j;
+
+	i = 0;
+	do {
+		buf[i++] = raddec[val % 10];
+		val /= 10;
+	} while (val != 0);
+
+	j = i;
+	while (i > 0) {
+		*s++ = buf[--i];
+	}
+	*s = 0;
+	return j;
+}
+
+

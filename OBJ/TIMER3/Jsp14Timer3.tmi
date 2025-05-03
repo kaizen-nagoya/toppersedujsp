@@ -1,0 +1,23 @@
+[PROJECT]
+ProjectName=Jsp14Timer3
+WorkingDirectory=C:\usr\TOPPERS\jsp-1.4\OBJ\TIMER3
+OutputDirectory=.
+ProjectFile=C:\usr\TOPPERS\jsp-1.4\OBJ\TIMER3\Jsp14Timer3.tmk
+ProjectInfoFile=C:\usr\TOPPERS\jsp-1.4\OBJ\TIMER3\Jsp14Timer3.tmi
+TargetName=M16C Family
+Type=1
+GoalFile=C:\usr\TOPPERS\jsp-1.4\OBJ\TIMER3\Jsp14Timer3.x30
+[NC]
+Name=NC30WA
+Version=V.5.10 Release 1
+[MEMBER]
+Count=0
+[DOCUMENTFILE]
+Count=0
+[ITEM]
+ActiveFactory=default
+FactoryName1=default
+ActiveTagName1=all
+Count=1
+[TOOL]
+ToolCount=0
